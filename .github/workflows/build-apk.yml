@@ -2,7 +2,8 @@ name: Emir AI Studio APK
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -26,6 +27,8 @@ jobs:
 
       - name: Android SDK kur
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: APK oluştur
         run: gradle assembleDebug
