@@ -3,8 +3,9 @@ package com.emir.aistudio
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,39 +20,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val Background = Color(0xFF090B16)
-private val Panel = Color(0xFF151A2B)
-private val Purple = Color(0xFF9B65FF)
-private val Cyan = Color(0xFF26D9E8)
-private val White = Color(0xFFF4F4FF)
-private val Muted = Color(0xFF969BB5)
+private val BG = Color(0xFF080B14)
+private val PANEL = Color(0xFF141C2B)
+private val PURPLE = Color(0xFF9365FF)
+private val CYAN = Color(0xFF35D9E8)
+private val WHITE = Color(0xFFF5F5FF)
+private val MUTED = Color(0xFF929CB2)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                StudioScreen()
+                BuilderScreen()
             }
         }
     }
 }
 
 @Composable
-fun StudioScreen() {
-    var prompt by remember { mutableStateOf("") }
-    var style by remember { mutableStateOf("3D Animasyon") }
-    var duration by remember { mutableStateOf("10 saniye") }
-    var message by remember { mutableStateOf("Hayalindeki videoyu tarif et!") }
+fun BuilderScreen() {
+    var fileName by remember { mutableStateOf("Henüz şematik seçilmedi") }
+    var status by remember { mutableStateOf("Şematik bekleniyor") }
+    var running by remember { mutableStateOf(false) }
+    var progress by remember { mutableIntStateOf(0) }
 
-    val gradient = Brush.horizontalGradient(
-        listOf(Purple, Cyan)
-    )
+    val filePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            fileName = uri.lastPathSegment ?: uri.toString()
+            status = "Dosya seçildi. Format kontrolü bekleniyor."
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background)
+            .background(BG)
             .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
@@ -59,155 +65,212 @@ fun StudioScreen() {
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("EMİR AI", color = White,
-                    fontSize = 27.sp, fontWeight = FontWeight.ExtraBold)
-                Text("STUDIO", color = Cyan,
-                    fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "EMIR BUILDER",
+                    color = WHITE,
+                    fontSize = 25.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    "AI CONSTRUCTION SYSTEM",
+                    color = CYAN,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
-            Box(
-                modifier = Modifier
-                    .background(Panel, RoundedCornerShape(14.dp))
-                    .border(1.dp, Purple, RoundedCornerShape(14.dp))
-                    .padding(horizontal = 13.dp, vertical = 9.dp)
-            ) {
-                Text("✦ AI STÜDYO", color = White, fontSize = 12.sp)
+            Text("◆ ONLINE", color = CYAN, fontSize = 12.sp)
+        }
+
+        Spacer(Modifier.height(28.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = PANEL),
+            shape = RoundedCornerShape(22.dp)
+        ) {
+            Column(Modifier.padding(18.dp)) {
+                Text("OTOMATİK FARM İNŞAATI", color = WHITE,
+                    fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+                Spacer(Modifier.height(7.dp))
+                Text(
+                    "Şematiğini yükle. Malzemelerini planla. İnşaatını yönet.",
+                    color = MUTED, fontSize = 13.sp
+                )
+                Spacer(Modifier.height(20.dp))
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .background(
+                            Brush.horizontalGradient(listOf(PURPLE, CYAN)),
+                            RoundedCornerShape(10.dp)
+                        )
+                )
             }
         }
 
-        Spacer(Modifier.height(30.dp))
+        Spacer(Modifier.height(20.dp))
 
-        Text("HAYALİNİ", color = White,
-            fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
-        Text("VİDEOYA DÖNÜŞTÜR", color = Purple,
-            fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+        SectionTitle("01  ŞEMATİK DOSYASI")
 
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Yapay zekâ ile kendi videolarını oluştur.",
-            color = Muted, fontSize = 14.sp
-        )
-
-        Spacer(Modifier.height(26.dp))
-
-        Text("VİDEO AÇIKLAMASI", color = White,
-            fontSize = 14.sp, fontWeight = FontWeight.Bold)
-
-        Spacer(Modifier.height(10.dp))
-
-        OutlinedTextField(
-            value = prompt,
-            onValueChange = { prompt = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(155.dp),
-            placeholder = {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = PANEL),
+            shape = RoundedCornerShape(17.dp)
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Text("Dosyan", color = MUTED, fontSize = 12.sp)
+                Spacer(Modifier.height(7.dp))
+                Text(fileName, color = WHITE, fontSize = 13.sp)
+                Spacer(Modifier.height(14.dp))
+                Button(
+                    onClick = {
+                        filePicker.launch(
+                            arrayOf(
+                                "*/*"
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PURPLE
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("ŞEMATİK DOSYASI SEÇ")
+                }
                 Text(
-                    "Örnek: Ormanda kaybolan küçük bir çocuğun macerası...",
-                    color = Muted
+                    "Desteklenecek formatlar: .schem, .schematic, .mcstructure",
+                    color = MUTED, fontSize = 10.sp
                 )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        SectionTitle("02  SUNUCU BAĞLANTISI")
+
+        InfoCard("Sunucu", "DonutSMP")
+        InfoCard("Platform", "Minecraft Bedrock")
+        InfoCard("Cihaz", "Android")
+
+        Spacer(Modifier.height(20.dp))
+
+        SectionTitle("03  İNŞAAT DURUMU")
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = PANEL),
+            shape = RoundedCornerShape(17.dp)
+        ) {
+            Column(Modifier.padding(17.dp)) {
+                Text("İlerleme", color = MUTED, fontSize = 12.sp)
+                Spacer(Modifier.height(7.dp))
+                Text("$progress%", color = CYAN,
+                    fontSize = 34.sp, fontWeight = FontWeight.ExtraBold)
+                LinearProgressIndicator(
+                    progress = { progress / 100f },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = CYAN,
+                    trackColor = Color(0xFF30394D)
+                )
+                Spacer(Modifier.height(14.dp))
+                Text(status, color = WHITE, fontSize = 13.sp)
+                Spacer(Modifier.height(8.dp))
+                Text("Blok yerleştirme: Henüz başlamadı",
+                    color = MUTED, fontSize = 11.sp)
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        SectionTitle("04  KONTROL MERKEZİ")
+
+        Button(
+            onClick = {
+                status = if (fileName == "Henüz şematik seçilmedi") {
+                    "Önce bir şematik dosyası seç."
+                } else {
+                    "Dosya seçildi. Şematik analiz motoru henüz hazırlanıyor."
+                }
             },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = White,
-                unfocusedTextColor = White,
-                focusedBorderColor = Purple,
-                unfocusedBorderColor = Color(0xFF343B55),
-                cursorColor = Cyan
+            modifier = Modifier.fillMaxWidth().height(54.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PURPLE
             ),
-            shape = RoundedCornerShape(16.dp)
-        )
-
-        Spacer(Modifier.height(23.dp))
-
-        Text("ANİMASYON TARZI", color = White,
-            fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text("ŞEMATİĞİ ANALİZ ET", fontWeight = FontWeight.Bold)
+        }
 
         Spacer(Modifier.height(10.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            listOf("3D Animasyon", "2D Animasyon").forEach { item ->
-                val selected = style == item
-                Button(
-                    onClick = { style = item },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selected) Purple else Panel
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(item, fontSize = 12.sp)
-                }
+            OutlinedButton(
+                onClick = {
+                    running = false
+                    status = "İnşaat duraklatıldı."
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("DURDUR", color = WHITE)
+            }
+
+            OutlinedButton(
+                onClick = {
+                    status = "İnşaat motoru henüz hazır değil."
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("DEVAM ET", color = CYAN)
             }
         }
-
-        Spacer(Modifier.height(23.dp))
-
-        Text("VİDEO SÜRESİ", color = White,
-            fontWeight = FontWeight.Bold, fontSize = 14.sp)
-
-        Spacer(Modifier.height(10.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("5 saniye", "10 saniye", "20 saniye").forEach { item ->
-                val selected = duration == item
-                Button(
-                    onClick = { duration = item },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(4.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selected) Color(0xFF31516A) else Panel
-                    ),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(item, fontSize = 11.sp)
-                }
-            }
-        }
-
-        Spacer(Modifier.height(28.dp))
-
-        Button(
-            onClick = {
-                message = if (prompt.isBlank()) {
-                    "Önce video açıklaması yazmalısın."
-                } else {
-                    "Video isteğin hazırlandı! API bağlantısı sonraki aşamada eklenecek."
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(58.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Purple
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Text(
-                "✦  VİDEO OLUŞTUR",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-        }
-
-        Spacer(Modifier.height(13.dp))
-
-        Text(
-            message,
-            color = Cyan,
-            fontSize = 13.sp
-        )
-
-        Spacer(Modifier.height(28.dp))
-
-        HorizontalDivider(color = Color(0xFF292F45))
-
-        Spacer(Modifier.height(18.dp))
-
-        Text("EMİR AI STUDIO", color = White,
-            fontWeight = FontWeight.Bold)
-        Text("Hayal et. Üret. Paylaş.", color = Muted,
-            fontSize = 12.sp)
 
         Spacer(Modifier.height(25.dp))
+
+        HorizontalDivider(color = Color(0xFF273147))
+
+        Spacer(Modifier.height(15.dp))
+
+        Text("EMIR BUILDER AI", color = WHITE,
+            fontWeight = FontWeight.Bold)
+        Text(
+            "Akıllı inşaat • Şematik • Blok planlama",
+            color = MUTED, fontSize = 11.sp
+        )
+        Spacer(Modifier.height(20.dp))
+    }
+}
+
+@Composable
+fun SectionTitle(title: String) {
+    Text(
+        title,
+        color = CYAN,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Bold
+    )
+    Spacer(Modifier.height(10.dp))
+}
+
+@Composable
+fun InfoCard(title: String, value: String) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = PANEL),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(15.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(title, color = MUTED, fontSize = 13.sp)
+            Text(value, color = WHITE, fontSize = 13.sp,
+                fontWeight = FontWeight.Bold)
+        }
     }
 }
